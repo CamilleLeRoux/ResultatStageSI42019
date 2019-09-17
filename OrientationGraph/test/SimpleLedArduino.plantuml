@@ -1,0 +1,23 @@
+@startuml
+caption Instances and Connectors in configuration SimpleLedArduino
+component [arduino : ArduinoArduino]<<PSM>>
+component [buzzer : Buzzer]<<PIM>>
+component [button : Button]<<PIM>>
+component [digital_output2 : DigitalOutputArduino]<<PIM>>
+component [digital_output : DigitalOutputArduino]<<PIM>>
+component [digital_input : DigitalInputArduino]<<PIM>>
+component [simple_Led : SimpleLed]<<PIM>>
+component [led : LedUC]<<PIM>>
+component [timer : TimerArduino]<<PSM>>
+[digital_output : DigitalOutputArduino] -(0- [arduino : ArduinoArduino] : DigitalIO => DigitalIO
+[simple_Led : SimpleLed] -(0- [led : LedUC] : Led => Led
+[simple_Led : SimpleLed] -(0- [button : Button] : Button => Button
+[digital_input : DigitalInputArduino] -(0- [arduino : ArduinoArduino] : DigitalIO => DigitalIO
+[led : LedUC] -(0- [digital_output : DigitalOutputArduino] : DigitalOutput => DigitalOutput
+[buzzer : Buzzer] -(0- [timer : TimerArduino] : timer => timer
+[button : Button] -(0- [digital_input : DigitalInputArduino] : DigitalInput => DigitalInput
+[simple_Led : SimpleLed] -(0- [timer : TimerArduino] : timer => timer
+[simple_Led : SimpleLed] -(0- [buzzer : Buzzer] : Buzzer => Buzzer
+[digital_output2 : DigitalOutputArduino] -(0- [arduino : ArduinoArduino] : DigitalIO => DigitalIO
+[buzzer : Buzzer] -(0- [digital_output2 : DigitalOutputArduino] : DigitalOutput => DigitalOutput
+@enduml

@@ -1,0 +1,154 @@
+//*
+// Fabien Fleurey - 20/08/2011
+//
+// This is an example of ThingML use to generate Arduino code which uses 
+// Electronic Brick components.
+//  
+// Requirements:
+//      - buzzer (1)    ->  Default pin: D_8
+//
+// The buzzer plays an SOS signal.
+//*
+import "../../bricks/led.thingml"
+import "../../bricks/button.thingml"
+import "../../bricks/buzzer.thingml"
+import "timer.thingml" from stl
+
+thing SimpleLed includes LedMsgs, TimerClientPort, BuzzerMsgs, ButtonMsgs
+{
+    readonly property timerID : UInt8
+    property count : UInt8 = 0
+	
+	required port Led
+	{
+		sends led_on, led_off
+	}
+	
+	required port Buzzer
+	{
+		sends buzzer_on, buzzer_off
+	}
+	
+	required port Button
+	{
+		receives  press, release
+	}
+	
+	
+	/*statechart SimpleLedImpl init Idle
+	{
+		state Idle
+		{
+			transition pressed -> LedOn
+			event Button?press
+			action Led!led_on ()
+		}
+		
+		state LedOn
+		{
+			transition released -> Idle
+			event Button?release
+			action Led!led_off ()
+		}
+	}*/
+
+	
+	
+	
+	statechart SimpleLedImpl init Wait
+	{       
+		state On
+		{
+           on entry do
+            	println "On"
+            	timer!timer_start (timerID, 1000)
+                Led!led_on()
+                Buzzer!buzzer_off()
+                count = count + 1
+            end
+            on exit timer!timer_start (timerID, 1000)
+            
+            transition stop -> Off
+            event t : timer?timer_timeout
+            
+            transition wait -> Wait
+            event t : Button?press
+            
+		}
+
+        state Off
+        {
+            on entry do
+            	println "Off"
+            	timer!timer_start (timerID, 1000)
+                Led!led_off()
+                Buzzer!buzzer_on()
+            end
+            on exit timer!timer_start (timerID, 1000)
+            
+            transition begin -> On
+            event t : timer?timer_timeout
+            
+            transition wait -> Wait
+            event t : Button?press
+            
+            transition wait2 -> Wait
+            guard count == 3 
+        } 
+        
+        state Wait{
+        	on entry do
+            	println "Wait"	
+            end
+            
+            transition begin -> On 
+            event t : Button?press
+
+        }
+	}
+	
+	
+	
+	/*
+	statechart SimpleLedImpl init Start
+	{       
+		state On
+		{
+           on entry do
+            	println "On"
+            	timer!timer_start (timerID, 1000)
+                Led!led_on()
+                Buzzer!buzzer_off()
+            end
+            on exit timer!timer_start (timerID, 1000)
+            
+            transition begin -> Off
+            event t : timer?timer_timeout
+		}
+
+        state Off
+        {
+            on entry do
+            	println "Off"
+            	timer!timer_start (timerID, 1000)
+                Led!led_off()
+                Buzzer!buzzer_on()
+            end
+            on exit timer!timer_start (timerID, 1000)
+            
+            transition begin -> On
+            event t : timer?timer_timeout
+        } 
+        
+        state Start{
+        	on entry do
+            	println "Start"	
+            	timer!timer_start (timerID, 50)
+            end
+            
+            transition begin -> On 
+            event t : timer?timer_timeout
+
+        }
+	}*/
+}

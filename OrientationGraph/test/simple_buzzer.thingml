@@ -1,0 +1,117 @@
+//*
+// Fabien Fleurey - 20/08/2011
+//
+// This is an example of ThingML use to generate Arduino code which uses 
+// Electronic Brick components.
+//  
+// Requirements:
+//      - buzzer (1)    ->  Default pin: D_8
+//
+// The buzzer plays an SOS signal.
+//*
+
+import "../../bricks/buzzer.thingml"
+import "timer.thingml" from stl
+import "log.thingml" from stl
+
+
+thing SimpleBuzzer includes BuzzerMsgs, TimerClientPort,LogMsgs
+{
+	property counter : UInt8 = 0
+    property end_motif : Boolean = false 
+    readonly property timerID : UInt8
+	
+	required port Buzzer
+	{
+		sends buzzer_delay
+	}
+	
+	readonly property DEBUG_ID : String
+	
+	required port log @sync_send "true" {
+		sends message_sent, message_handled
+	}
+	
+	
+	statechart SimpleBuzzerImpl init Wait
+	{       
+		state Fast
+		{
+            on entry do
+            	print "F"
+            	counter = 0
+            end
+            
+			internal repeat event t : timer?timer_timeout
+            guard t.id == timerID and counter < 3
+            action do
+            	print "."
+                Buzzer!buzzer_delay (100)
+                counter = counter + 1
+                timer!timer_start (timerID, 150)
+                end
+                
+            transition switch -> Slow
+            event t : timer?timer_timeout 
+            guard t.id == timerID and counter == 3 and not end_motif
+			action do
+            	timer!timer_start (timerID, 50)
+            	log!message_handled(DEBUG_ID, "Fast", "Slow", "timer", "timer_timeout", "")  	
+				log!message_sent(DEBUG_ID, "timer", "timer_timeout", "")
+			end
+            
+            transition waiting -> Wait
+            event t : timer?timer_timeout
+            guard t.id == timerID and counter == 3 and end_motif
+            action do
+            	log!message_handled(DEBUG_ID, "Fast", "Wait", "timer", "timer_timeout", "")  	
+				log!message_sent(DEBUG_ID, "timer", "timer_timeout", "")
+			end
+		}
+			
+		state Slow
+		{	
+            on entry do
+            	print "S"
+            	counter = 0
+           	end
+            on exit end_motif = true
+                
+            internal repeat event t : timer?timer_timeout
+            guard t.id == timerID and counter < 3
+            action do
+            	print "-"
+                Buzzer!buzzer_delay (200)
+                counter = counter + 1
+                timer!timer_start (timerID, 250)
+                end
+                
+            transition switch -> Fast
+            event t : timer?timer_timeout
+            guard t.id == timerID and counter == 3
+            action do
+            	timer!timer_start (timerID, 50)
+            	log!message_handled(DEBUG_ID, "Slow", "Fast", "timer", "timer_timeout", "")  	
+				log!message_sent(DEBUG_ID, "timer", "timer_timeout", "")
+			end
+		}
+
+        state Wait
+        {
+            on entry do
+            	println "W"
+            	timer!timer_start (timerID, 1000)
+            end
+            on exit timer!timer_start (timerID, 50)
+            
+            transition begin -> Fast
+            event t : timer?timer_timeout
+            guard t.id == timerID
+            action do
+            	end_motif = false
+            	log!message_handled(DEBUG_ID, "Wait", "Fast", "timer", "timer_timeout", "")  	
+				log!message_sent(DEBUG_ID, "timer", "timer_timeout", "")
+			end
+        } 
+	}
+}

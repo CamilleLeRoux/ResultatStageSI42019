@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Parseur</title>
+</head>
+<label for="fileinput">Choose your ThingML file</label>
+<input type="file" id="fileinput" />
+<script type="text/javascript">
+	var components = [];
+	var resIn = [];
+	var resOut = [];
+	var resBoth = [];
+  	function readSingleFile(evt) {
+	  	document.getElementById('input').innerHTML = "";
+	  	document.getElementById('output').innerHTML = ""; 
+		var f = evt.target.files[0];   
+		if (f) {
+			var r = new FileReader();
+			r.onload = function(e) { 
+		  		var contents = e.target.result;             
+			    var ct = r.result;
+			    var words = ct.split('\n').join(' ').split('{').join(' { ').split('}').join(' } ').split('\t').join('').split(' '); 
+			    for( var i = 0; i < words.length; i++){ 
+				   if ( words[i] ==  ''){
+				     words.splice(i, 1); 
+				   }
+				}
+				for( var i = 0; i < words.length; i++){ 
+				   if ( words[i] ==  'port'){
+				      components.push(words[i+1]);
+				   }
+				}
+				for (var i = 0; i < words.length; i++) {
+					if(words[i] == "sends"){
+				  		var j = i;
+				  		while(words[j] != "}"){
+				  			if(words[j] == "receives"){
+				  				if(components.includes(words[i-2]))
+				  				resBoth.push(words[i-2]);
+				  			}
+				  			++j;
+				  		}
+				  		resOut.push(words[i-2]);
+					} else if(words[i] == "receives"){
+						var j = i;
+				  		while(words[j] != "}"){
+				  			if(words[j] == "sends"){
+				  				if(components.includes(words[i-2]))
+				  				resBoth.push(words[i-2]);
+				  			}
+				  			++j;
+				  		}
+				  		if(components.includes(words[i-2]))
+				  		resIn.push(words[i-2]);
+					}
+				}
+				for(var x = 0; x < resIn.length; ++x){
+					if(resBoth.includes(resIn[x])){
+						resIn.splice(x,1);
+					}
+					document.getElementById('input').innerHTML += resIn[x];
+					document.getElementById('input').innerHTML += "<br>";
+				}
+				for(var x = 0; x < resOut.length; ++x){
+					if(resBoth.includes(resOut[x])){
+						resOut.splice(x,1);
+					}
+					document.getElementById('output').innerHTML += resOut[x];
+					document.getElementById('output').innerHTML += "<br>";
+				}
+				for(var x = 0; x < resBoth.length; ++x){
+					document.getElementById('both').innerHTML += resBoth[x];
+					document.getElementById('both').innerHTML += "<br>";
+				}
+		  	}
+		  r.readAsText(f);
+		} else { 
+		  alert("Failed to load file");
+		}
+	  }
+
+  document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
+</script>
+</head>
+<body>
+	<h3>Input :</h3>
+	<div id="input"></div>
+	<h3>Output :</h3>
+	<div id="output"></div>
+	<h3>Both :</h3>
+	<div id="both"></div><br>
+
+
+<label for="fileinput2">Choose your PlantUML file</label>
+<input type="file" id="fileinput2" />
+<script type="text/javascript">
+  function readSingleFile2(evt) {
+	var compos = [];
+	var compos2 = [];
+	var port1 = [];
+	var port2 = [];
+	var couple = [];
+  	document.getElementById('graph').innerHTML = "";
+	var f = evt.target.files[0];   
+	if (f) {
+	  var r = new FileReader();
+	  r.onload = function(e) { 
+  		var contents = e.target.result;             
+	    var ct = r.result;
+	    var words = ct.split('[').join(' [ ').split(']').join(' ] ').split(':').join(' : ').split('\n').join(' ').split(' '); 
+		for (var i = 0; i < words.length; i++) {
+			if (words[i] == "-(0-"){
+			  	var j = i;
+			  	var str = "";
+			  	while(words[j] != "["){
+			  		--j;
+			  	}
+			  	while(words[j+1] != "]"){
+			  		++j;
+			  		str = str + ' ' + words[j];
+			  	}
+			  	str = str.split(']').join('');
+			  	compos.push(str);
+
+			  	var k = i;
+			  	var str2 = "";
+			  	while(words[k] != "["){
+			  		++k;
+			  	}
+			  	while(words[k+1] != "]"){
+			  		++k;
+			  		str2 = str2 + ' ' + words[k];
+			  	}
+			  	str2 = str2.split('[').join('');
+			  	compos2.push(str2);
+
+			  	var l = i;
+			  	var str3 = "";
+			  	var str4 = "";
+			  	while(words[l] != "=>"){
+			  		++l;
+			  	}
+				str3 = words[l-1];
+				str4 = words[l+1];
+			  	port1.push(str3);
+			  	port2.push(str4);
+
+		  	} 
+		}
+	  	for(var x = 0; x < compos.length; ++x){
+	  		var obj = {compo1 : compos[x], compo2 : compos2[x], portCompo1 : port1[x], portCompo2 : port2[x]};
+			couple.push(obj);
+		}
+
+		for (var x = 0; x < couple.length; ++x) {
+
+		}
+
+		for (var x = 0; x < couple.length; ++x) {
+			var check = false;
+			if(resIn.length > 0)
+			for(var y = 0; y < resIn.length; ++y){
+				if(couple[x].portCompo1.toUpperCase().search(resIn[y].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' <-- ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					//check = true;
+				}
+			}
+			if(resOut.length > 0)
+			for(var w = 0; w < resOut.length; ++w){
+				if(couple[x].portCompo1.toUpperCase().search(resOut[w].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' --> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					//check = true;
+				}
+			}
+			if(resBoth.length > 0)
+			for(var z = 0; z < resBoth.length; ++z){
+				if(couple[x].portCompo1.toUpperCase().search(resBoth[z].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' <--> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					//check = true;
+				}
+			}
+		}
+	  }
+	  r.readAsText(f);
+	} else { 
+	  alert("Failed to load file");
+	}
+  }
+  document.getElementById('fileinput2').addEventListener('change', readSingleFile2, false);
+</script>
+
+<h3>Graph :</h3>
+<div id="graph"></div>
+</body>
+</html>

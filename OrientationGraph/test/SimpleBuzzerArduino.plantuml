@@ -1,0 +1,15 @@
+@startuml
+caption Instances and Connectors in configuration SimpleBuzzerArduino
+component [buzzer : Buzzer]<<PIM>>
+component [timer : TimerArduino]<<PSM>>
+component [arduino : ArduinoArduino]<<PSM>>
+component [digital_output : DigitalOutputArduino]<<PIM>>
+component [log : ConsoleLogger]<<PIM>>
+component [simple_buzzer : SimpleBuzzer]<<PIM>>
+[simple_buzzer : SimpleBuzzer] -(0- [timer : TimerArduino] : timer => timer
+[buzzer : Buzzer] -(0- [timer : TimerArduino] : timer => timer
+[digital_output : DigitalOutputArduino] -(0- [arduino : ArduinoArduino] : DigitalIO => DigitalIO
+[simple_buzzer : SimpleBuzzer] -(0- [buzzer : Buzzer] : Buzzer => Buzzer
+[simple_buzzer : SimpleBuzzer] -(0- [log : ConsoleLogger] : log => log
+[buzzer : Buzzer] -(0- [digital_output : DigitalOutputArduino] : DigitalOutput => DigitalOutput
+@enduml

@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Parseur</title>
+</head>
+<label for="fileinput">Choose your ThingML file</label>
+<input type="file" id="fileinput" />
+<script type="text/javascript">
+	var components = [];
+	var stateCharts = [];
+	var resIn = [];
+	var resOut = [];
+	var resBoth = [];
+  	function readSingleFile(evt) {
+	  	document.getElementById('input').innerHTML = "";
+	  	document.getElementById('output').innerHTML = ""; 
+		var f = evt.target.files[0];   
+		if (f) {
+			var r = new FileReader();
+			r.onload = function(e) { 
+		  		var contents = e.target.result;             
+			    var ct = r.result;
+			    var words = ct.split('\n').join(' ').split('{').join(' { ').split('}').join(' } ').split('\t').join('').split(' '); 
+			    for( var i = 0; i < words.length; i++){ 
+				   if ( words[i] ==  ''){
+				     words.splice(i, 1); 
+				   }
+				}
+				for( var i = 0; i < words.length; i++){ 
+				   if ( words[i] ==  'port'){
+				      components.push(words[i+1]);
+				   }
+				   if ( words[i] ==  'thing'){
+				      stateCharts.push(words[i+1]);
+				   }
+				}
+				for (var i = 0; i < words.length; i++) {
+					if(words[i] == "sends"){
+						var tmp = "";
+						var tmpi = i;
+						while(words[tmpi] != "port"){
+							--tmpi;
+						}
+						tmp = words[tmpi+1];
+				  		var j = i;
+				  		while(words[j] != "}"){
+				  			if(words[j] == "receives"){
+				  				if(components.includes(tmp))
+				  				resBoth.push(tmp);
+				  			}
+				  			++j;
+				  		}
+				  		if(components.includes(tmp))
+				  		resOut.push(tmp);
+					} else if(words[i] == "receives"){
+						var tmp = "";
+						var tmpi = i;
+						while(words[tmpi] != "port"){
+							--tmpi;
+						}
+						tmp = words[tmpi+1];
+						var j = i;
+				  		while(words[j] != "}"){
+				  			if(words[j] == "sends"){
+				  				if(components.includes(tmp))
+				  				resBoth.push(tmp);
+				  			}
+				  			++j;
+				  		}
+				  		if(components.includes(tmp))
+				  		resIn.push(tmp);
+					}
+				}
+				for(var x = 0; x < resIn.length; ++x){
+					if(resBoth.includes(resIn[x])){
+						resIn.splice(x,1);
+					}
+					document.getElementById('input').innerHTML += resIn[x];
+					document.getElementById('input').innerHTML += "<br>";
+				}
+				for(var x = 0; x < resOut.length; ++x){
+					if(resBoth.includes(resOut[x])){
+						resOut.splice(x,1);
+					}
+					document.getElementById('output').innerHTML += resOut[x];
+					document.getElementById('output').innerHTML += "<br>";
+				}
+				for(var x = 0; x < resBoth.length; ++x){
+					document.getElementById('both').innerHTML += resBoth[x];
+					document.getElementById('both').innerHTML += "<br>";
+				}
+		  	}
+		  r.readAsText(f);
+		} else { 
+		  alert("Failed to load file");
+		}
+	  }
+
+  document.getElementById('fileinput').addEventListener('change', readSingleFile, false);
+</script>
+</head>
+<body>
+	<h3>Input :</h3>
+	<div id="input"></div>
+	<h3>Output :</h3>
+	<div id="output"></div>
+	<h3>Both :</h3>
+	<div id="both"></div><br>
+
+
+	<label for="fileinput2">Choose your PlantUML file</label>
+	<input type="file" id="fileinput2" />
+	<h3>Graph :</h3>
+	<div id="graph"></div><br>
+	<input type="button" id="dl" value ="Download file"/>
+	<script type="text/javascript">
+	var res = "";
+	var couple = [];
+	var nextsIn = [];
+	var nextsOut = [];
+	var nextsBoth = [];
+	var psm = [];
+	var psmCouple = [];
+  function readSingleFile2(evt) {
+	var compos = [];
+	var compos2 = [];
+	var port1 = [];
+	var port2 = [];
+  	document.getElementById('graph').innerHTML = "";
+	var f = evt.target.files[0];   
+	if (f) {
+	  var r = new FileReader();
+	  r.onload = function(e) { 
+  		var contents = e.target.result;             
+	    var ct = r.result;
+	    var words = ct.split('[').join(' [ ').split(']').join(' ] ').split(':').join(' : ').split('\n').join(' ').split(' '); 
+		for (var i = 0; i < words.length; i++) {
+			if(words[i] == "<<PSM>>"){
+				var j = i;
+			  	var str = "";
+			  	while(words[j] != "["){
+			  		--j;
+			  	}
+			  	while(words[j+1] != "]"){
+			  		++j;
+			  		str = str + ' ' + words[j];
+			  	}
+			  	str = str.split(']').join('');
+			  	psm.push(str);
+			}
+
+			if (words[i] == "-(0-"){
+			  	var j = i;
+			  	var str = "";
+			  	while(words[j] != "["){
+			  		--j;
+			  	}
+			  	while(words[j+1] != "]"){
+			  		++j;
+			  		str = str + ' ' + words[j];
+			  	}
+			  	str = str.split(']').join('');
+			  	compos.push(str);
+
+			  	var k = i;
+			  	var str2 = "";
+			  	while(words[k] != "["){
+			  		++k;
+			  	}
+			  	while(words[k+1] != "]"){
+			  		++k;
+			  		str2 = str2 + ' ' + words[k];
+			  	}
+			  	str2 = str2.split('[').join('');
+			  	compos2.push(str2);
+
+			  	var l = i;
+			  	var str3 = "";
+			  	var str4 = "";
+			  	while(words[l] != "=>"){
+			  		++l;
+			  	}
+				str3 = words[l-1];
+				str4 = words[l+1];
+			  	port1.push(str3);
+			  	port2.push(str4);
+
+		  	} 
+		}
+	  	for(var x = 0; x < compos.length; ++x){
+	  		if(!psm.includes(compos[x]) && !psm.includes(compos2[x])){
+	  			var obj = {compo1 : compos[x], compo2 : compos2[x], portCompo1 : port1[x], portCompo2 : port2[x], view : false};
+				couple.push(obj);
+			}else{
+				var obj = {compo1 : compos[x], compo2 : compos2[x], portCompo1 : port1[x], portCompo2 : port2[x], view : false};
+				psmCouple.push(obj);
+			}
+		}
+
+		for (var i = 0; i < resIn.length; ++i) {
+			nextsIn.push({input : resIn[i], nexts : findNexts(resIn[i])});
+		}
+		for (var i = 0; i < resOut.length; ++i) {
+			nextsOut.push({output : resOut[i], nexts : findNexts(resOut[i])});
+		}
+		for (var i = 0; i < resBoth.length; ++i) {
+			nextsBoth.push({both : resBoth[i], nexts : findNexts(resBoth[i])});
+		}
+
+		console.log(nextsIn);
+		console.log(nextsOut);
+		console.log(nextsBoth);
+
+		sortIn(nextsIn);
+		sortOut(nextsOut);
+		sortBoth(nextsBoth);
+
+		nextsIn.forEach(function(element) {
+		  	console.log(element);
+			for (var i = 0; i < element.nexts.length; ++i) {
+				components.forEach(function(e){
+					if(element.input != undefined){
+						if(e.toUpperCase() != element.input.toUpperCase() && element.nexts[i] != undefined){
+							if( element.nexts[i].toUpperCase().search(e.toUpperCase()) != -1){
+								element.nexts.splice(i,1);
+								--i;
+							}
+						}
+					}
+		  		});
+		  	}
+		  	console.log(element);
+		});
+		nextsOut.forEach(function(element) {
+			console.log(element);
+			for (var i = 0; i < element.nexts.length; ++i) {
+				components.forEach(function(e){
+					if(element.output != undefined){
+						if(e.toUpperCase() != element.output.toUpperCase() && element.nexts[i] != undefined){
+							if( element.nexts[i].toUpperCase().search(e.toUpperCase()) != -1){
+								element.nexts.splice(i,1);
+								--i;
+							}
+						}
+					}
+		  		});
+		  	}
+		  	console.log(element);
+		});
+		nextsBoth.forEach(function(element) {
+			console.log(element);
+			for (var i = 0; i < element.nexts.length; ++i) {
+				components.forEach(function(e){
+					if(element.both != undefined){
+						if(e.toUpperCase() != element.both.toUpperCase() && element.nexts[i] != undefined){
+							if( element.nexts[i].toUpperCase().search(e.toUpperCase()) != -1){
+								element.nexts.splice(i,1);
+								--i;
+							}
+						}
+					}
+		  		});
+		  	}
+		  	console.log(element);
+		});
+
+		display();
+
+
+/*
+		for (var x = 0; x < couple.length; ++x) {
+			var check = false;
+			if(resIn.length > 0)
+			for(var y = 0; y < resIn.length; ++y){
+				if(couple[x].portCompo1.toUpperCase().search(resIn[y].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' <-- ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					res += '['+ couple[x].compo1 + ']' + ' <-- ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					res += "\n";
+					check = true;
+					/*var tmp = couple[x].compo2;
+					console.log("tmp = " + tmp);
+					console.log("length = " + couple.length);
+					var w = 0;
+					if(check)couple.splice(x, 1);
+					while (w < couple.length){
+						if(couple[w].compo1 == tmp || couple[w].compo2 == tmp){
+							document.getElementById('graph').innerHTML += '['+ couple[w].compo1 + ']' + ' <-- ' + '['+ couple[w].compo2 + '] : ' + couple[w].portCompo1 + '=>' + couple[w].portCompo2;
+							document.getElementById('graph').innerHTML += "<br>";
+							res += '['+ couple[w].compo1 + ']' + ' <-- ' + '['+ couple[w].compo2 + '] : ' + couple[w].portCompo1 + '=>' + couple[w].portCompo2;
+							res += "\n";
+							check = true;
+							console.log("Couple : " + couple[w].compo1 + ' ' + couple[w].compo2);
+							couple.splice(w, 1);
+						}
+						++w;
+					}
+				}else if(couple[x].portCompo2.toUpperCase().search(resIn[y].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' --> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					res += '['+ couple[x].compo1 + ']' + ' <-- ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					res += "\n";
+					check = true;
+				}
+			}
+			if(resOut.length > 0)
+			for(var w = 0; w < resOut.length; ++w){
+				if(couple[x].portCompo1.toUpperCase().search(resOut[w].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' --> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					res += '['+ couple[x].compo1 + ']' + ' --> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					res += "\n";
+					check = true;
+				}else if(couple[x].portCompo2.toUpperCase().search(resOut[w].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' <-- ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					res += '['+ couple[x].compo1 + ']' + ' <-- ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					res += "\n";
+					check = true;
+				}
+			}
+			if(resBoth.length > 0)
+			for(var z = 0; z < resBoth.length; ++z){
+				if(couple[x].portCompo1.toUpperCase().search(resBoth[z].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' <--> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					res += '['+ couple[x].compo1 + ']' + ' <--> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					res += "\n";
+					check = true;
+				}else if(couple[x].portCompo2.toUpperCase().search(resBoth[z].toUpperCase()) != -1){
+					document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' <--> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					document.getElementById('graph').innerHTML += "<br>";
+					res += '['+ couple[x].compo1 + ']' + ' <--> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+					res += "\n";
+					check = true;
+				}
+			}
+			if(!check){
+				document.getElementById('graph').innerHTML += '['+ couple[x].compo1 + ']' + ' --> ' + '['+ couple[x].compo2 + '] : ' + couple[x].portCompo1 + '=>' + couple[x].portCompo2;
+				document.getElementById('graph').innerHTML += "<br>";
+			}
+		}*/
+	  //download('test.plantuml', res);
+	  }
+	  r.readAsText(f);
+	} else { 
+	  alert("Failed to load file");
+	}
+  }
+	function download(filename, text) {
+	    var element = document.createElement('a');
+	    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+	    element.setAttribute('download', filename);
+
+	    element.style.display = 'none';
+	    document.body.appendChild(element);
+
+	    element.click();
+
+	    document.body.removeChild(element);
+	}
+
+	function findNexts(first) {
+		var nexts = [];
+		var couple2 = couple;
+		for (var x = 0; x < couple2.length; ++x) {
+			var tmp = "";
+			if((couple2[x].portCompo1.toUpperCase().search(first.toUpperCase()) != -1 || couple2[x].compo1.toUpperCase().search(first.toUpperCase()) != -1)){
+				tmp = couple2[x].compo2;
+				couple[x].view = true;
+				nexts.push(tmp);
+			}else if ((couple2[x].portCompo2.toUpperCase().search(first.toUpperCase()) != -1 || couple2[x].compo2.toUpperCase().search(first.toUpperCase()) != -1)){
+				tmp = couple2[x].compo1;
+				couple[x].view = true;
+				nexts.push(tmp);
+			}/*else if(tmp != undefined){
+				if((couple2[x].portCompo1.toUpperCase().search(tmp.toUpperCase()) != -1 || couple2[x].compo1.toUpperCase().search(tmp.input.toUpperCase()) != -1) && !couple[x].view){
+					tmp = couple2[x].compo2;
+					couple[x].view = true;
+					nexts.push(tmp);
+				}else if ((couple2[x].portCompo2.toUpperCase().search(tmp.toUpperCase()) != -1 || couple2[x].compo2.toUpperCase().search(tmp.toUpperCase()) != -1) && !couple[x].view){
+					tmp = couple2[x].compo1;
+					couple[x].view = true;
+					nexts.push(tmp);
+				}
+			}*/
+		}
+		return nexts;
+	}
+	function display() {
+		for (var i = 0; i < resIn.length; ++i) {
+			nextsIn.forEach(function(nextsi) {
+				if(nextsi.input == resIn[i] && nextsi.input != "undefined"){
+					for (var j = 0; j < nextsi.nexts.length; ++j) {
+						if(nextsi.nexts[j].toUpperCase().search(resIn[i].toUpperCase()) != -1){
+							document.getElementById('graph').innerHTML += '['+ stateCharts[0] + ']' + ' <-- ' + '['+ nextsi.nexts[j] + ']';
+							document.getElementById('graph').innerHTML += "<br>";
+						}else{
+							document.getElementById('graph').innerHTML += '['+ nextsi.nexts[j-1] + ']' + ' <-- ' + '['+ nextsi.nexts[j] + ']';
+							document.getElementById('graph').innerHTML += "<br>";
+						}
+					}
+				}
+			});
+
+		}
+		for (var i = 0; i < resOut.length; ++i) {
+			nextsOut.forEach(function(nextso) {
+				if(nextso.output == resOut[i] && nextso.output != "undefined"){
+					for (var j = 0; j < nextso.nexts.length; ++j) {
+						if(nextso.nexts[j].toUpperCase().search(resOut[i].toUpperCase()) != -1){
+							document.getElementById('graph').innerHTML += '['+ stateCharts[0] + ']' + ' --> ' + '['+ nextso.nexts[j] + ']';
+							document.getElementById('graph').innerHTML += "<br>";
+						}else{
+							document.getElementById('graph').innerHTML += '['+ nextso.nexts[j-1] + ']' + ' --> ' + '['+ nextso.nexts[j] + ']';
+							document.getElementById('graph').innerHTML += "<br>";
+						}
+					}
+				}
+			});
+
+		}
+		for (var i = 0; i < resBoth.length; ++i) {
+			nextsBoth.forEach(function(nextsb) {
+				if(nextsb.both == resBoth[i] && nextsb.both != "undefined"){
+					for (var j = 0; j < nextsb.nexts.length; ++j) {
+						if(nextsb.nexts[j].toUpperCase().search(resBoth[i].toUpperCase()) != -1){
+							document.getElementById('graph').innerHTML += '['+ stateCharts[0] + ']' + ' <--> ' + '['+ nextsb.nexts[j] + ']';
+							document.getElementById('graph').innerHTML += "<br>";
+						}else{
+							document.getElementById('graph').innerHTML += '['+ nextsb.nexts[j-1] + ']' + ' <--> ' + '['+ nextsb.nexts[j] + ']';
+							document.getElementById('graph').innerHTML += "<br>";
+						}
+					}
+				}
+			});
+		}
+
+		for (var i = 0; i < psmCouple.length; ++i) {
+			if(psmCouple[i].compo1.toUpperCase().search(stateCharts[0].toUpperCase()) != -1){
+				document.getElementById('graph').innerHTML += '['+ stateCharts[0] + ']' + ' <-- ' + '['+ psmCouple[i].compo2 + ']';
+				document.getElementById('graph').innerHTML += "<br>";
+			}else if(psmCouple[i].compo2.toUpperCase().search(stateCharts[0].toUpperCase()) != -1){
+				document.getElementById('graph').innerHTML += '['+ psmCouple[i].compo1 + ']' + ' <-- ' + '['+ stateCharts[0] + ']';
+				document.getElementById('graph').innerHTML += "<br>";
+			}else{
+				nextsIn.forEach(function(element){
+					if(findIn(element.nexts,psmCouple[i].compo1)){
+						document.getElementById('graph').innerHTML += '['+ psmCouple[i].compo1 + ']' + ' <-- ' + '['+ psmCouple[i].compo2 + ']';
+						document.getElementById('graph').innerHTML += "<br>";
+					}else if(findIn(element.nexts,psmCouple[i].compo2)){
+						document.getElementById('graph').innerHTML += '['+ psmCouple[i].compo1 + ']' + ' --> ' + '['+ psmCouple[i].compo2 + ']';
+						document.getElementById('graph').innerHTML += "<br>";
+					}
+				});
+				nextsOut.forEach(function(element){
+					if(findIn(element.nexts,psmCouple[i].compo1)){
+						document.getElementById('graph').innerHTML += '['+ psmCouple[i].compo1 + ']' + ' --> ' + '['+ psmCouple[i].compo2 + ']';
+						document.getElementById('graph').innerHTML += "<br>";
+					}else if(findIn(element.nexts,psmCouple[i].compo2)){
+						document.getElementById('graph').innerHTML += '['+ psmCouple[i].compo1 + ']' + ' <-- ' + '['+ psmCouple[i].compo2 + ']';
+						document.getElementById('graph').innerHTML += "<br>";
+					}
+				});
+				nextsBoth.forEach(function(element){
+					if(findIn(element.nexts,psmCouple[i].compo1) || findIn(element.nexts,psmCouple[i].compo2)){
+						document.getElementById('graph').innerHTML += '['+ psmCouple[i].compo1 + ']' + ' <--> ' + '['+ psmCouple[i].compo2 + ']';
+						document.getElementById('graph').innerHTML += "<br>";
+					}
+				});
+			}
+		}
+	}
+
+	function findIn(tab, element){
+		for (var x = 0; x < tab.length; ++x) {
+			if(tab[x].toUpperCase().search(element.toUpperCase()) != -1){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function sortIn(tab){
+		var tab2 = tab;
+		var res = [];
+		tab.forEach(function(element){
+			var tmp = "";
+			for (var x = 0; x < element.nexts.length; ++x) {
+				if(x == 0 && element.nexts[x].toUpperCase().search(element.input.toUpperCase()) != -1){
+					console.log("tab :");
+					console.log(tab);
+				}else if(element.nexts[x].toUpperCase().search(element.input.toUpperCase()) != -1){
+					tmp = element.nexts[x];
+					element.nexts.splice(x,1);
+					res.push(tmp);
+					element.nexts.forEach(function(e){
+						res.push(e);
+					});
+					element.nexts = res;
+				}
+			}
+		});
+	}
+	function sortOut(tab){
+		var tab2 = tab;
+		var res = [];
+		tab.forEach(function(element){
+			var tmp = "";
+			for (var x = 0; x < element.nexts.length; ++x) {
+				if(x == 0 && element.nexts[x].toUpperCase().search(element.output.toUpperCase()) != -1){
+					console.log("tab :");
+					console.log(tab);
+				}else if(element.nexts[x].toUpperCase().search(element.output.toUpperCase()) != -1){
+					tmp = element.nexts[x];
+					element.nexts.splice(x,1);
+					res.push(tmp);
+					element.nexts.forEach(function(e){
+						res.push(e);
+					});
+					element.nexts = res;
+				}
+			}
+		});
+	}
+	function sortBoth(tab){
+		var tab2 = tab;
+		var res = [];
+		tab.forEach(function(element){
+			var tmp = "";
+			for (var x = 0; x < element.nexts.length; ++x) {
+				if(x == 0 && element.nexts[x].toUpperCase().search(element.both.toUpperCase()) != -1){
+					console.log("tab :");
+					console.log(tab);
+				}else if(element.nexts[x].toUpperCase().search(element.both.toUpperCase()) != -1){
+					tmp = element.nexts[x];
+					element.nexts.splice(x,1);
+					res.push(tmp);
+					element.nexts.forEach(function(e){
+						res.push(e);
+					});
+					element.nexts = res;
+				}
+			}
+		});
+	}
+  document.getElementById('fileinput2').addEventListener('change', readSingleFile2, false);
+
+  //document.getElementById('dl').addEventListener('click', download("test.plantuml",res), false);
+</script>
+</body>
+</html>
